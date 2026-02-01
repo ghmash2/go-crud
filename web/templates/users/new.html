@@ -1,0 +1,50 @@
+{{define "users-new"}}
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create User - Go CRUD</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Create User</h1>
+      <nav class="nav">
+        <a href="/users">Users</a>
+        <a href="/users/new">Create</a>
+      </nav>
+    </header>
+
+    <main class="card">
+      <form method="post" action="/users/create" class="form">
+        <label>
+          Name
+          <input name="name" value="{{.Name}}" required />
+        </label>
+
+        <label>
+          Email
+          <input type="email" name="email" value="{{.Email}}" required />
+        </label>
+
+        <label>
+          Password
+          <input type="password" name="password" value="{{.Password}}" required />
+        </label>
+
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+    </main>
+
+    <footer class="footer">
+      <small>Mahmud</small>
+    </footer>
+  </div>
+</body>
+
+</html>
+{{end}}

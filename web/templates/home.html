@@ -1,0 +1,35 @@
+{{define "home"}}
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Home - Go CRUD</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Welcome to Go CRUD</h1>
+            <nav class="nav">
+                <a href="/users">Users</a>
+                <a href="/users/new">Create</a>
+            </nav>
+        </header>
+
+        <main class="card">
+            <h2>User Management System</h2>
+            <p>This is a simple CRUD application built with Go and MySQL.</p>
+            <p><a href="/users" class="btn primary">View All Users</a></p>
+        </main>
+
+        <footer class="footer">
+            <small>Mahmud</small>
+        </footer>
+    </div>
+</body>
+
+</html>
+{{end}}
