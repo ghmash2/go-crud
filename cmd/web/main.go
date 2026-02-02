@@ -7,7 +7,6 @@ import (
 	"go-crud/internal/repository"
 	"go-crud/internal/router"
 	"go-crud/internal/service"
-	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -24,17 +23,17 @@ func main() {
 	defer db.Close()
 
 	userRepo := repository.NewUserRepository(db)
+	productRepo := repository.NewProductRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db)
 
 	userService := service.NewUserService(userRepo)
+	productService := service.NewProductService(productRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
 
-	tmpl := template.Must(template.ParseGlob("web/templates/*.html"))
-	tmpl = template.Must(tmpl.ParseGlob("web/templates/users/*.html"))
-	if tmpl == nil {
-		log.Fatal("Failed to parse templates")
-	}
-
-	userController := controller.NewUserController(userService, tmpl)
-	mux := router.New(userController)
+	userController := controller.NewUserController(userService)
+	productController := controller.NewProductController(productService)
+	categoryController := controller.NewCategoryController(categoryService)
+	mux := router.New(userController, productController, categoryController)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.AppPort,

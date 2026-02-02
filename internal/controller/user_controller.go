@@ -1,31 +1,21 @@
 package controller
 
 import (
-	"go-crud/internal/models"
+	"encoding/json"
 	"go-crud/internal/service"
 	"go-crud/internal/validation"
-	"html/template"
 	"net/http"
 	"strconv"
 )
 
-func NewUserController(userService service.UserService, tmpl *template.Template) UserController {
+func NewUserController(userService service.UserService) UserController {
 	return UserController{
 		UserService: userService,
-		Template:    tmpl,
 	}
 }
 
 type UserController struct {
 	UserService service.UserService
-	Template    *template.Template
-}
-
-type viewData struct {
-	Title   string
-	Error   string
-	Success string
-	Any     any
 }
 
 func parseID(r *http.Request) (uint64, error) {
@@ -36,37 +26,16 @@ func parseID(r *http.Request) (uint64, error) {
 	return id, nil
 }
 
-func (c UserController) Home(w http.ResponseWriter, r *http.Request) {
-	err := c.Template.ExecuteTemplate(w, "home", nil)
-	if err != nil {
-		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (c UserController) NewUserForm(w http.ResponseWriter, r *http.Request) {
-	err := c.Template.ExecuteTemplate(w, "users-new", models.User{})
-	if err != nil {
-		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func (c UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form", http.StatusBadRequest)
+	var user validation.UserValidation
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
-	}
-
-	user := validation.UserValidation{
-		Name:     r.FormValue("name"),
-		Email:    r.FormValue("email"),
-		Password: r.FormValue("password"),
 	}
 
 	if err := validation.ValidateUser(user); err != nil {
@@ -74,19 +43,18 @@ func (c UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := c.UserService.CreateUser(r.Context(), user)
+	id, err := c.UserService.CreateUser(r.Context(), user)
 	if err != nil {
-		err = c.Template.ExecuteTemplate(w, "users-new", models.User{
-			Name:  user.Name,
-			Email: user.Email,
-		})
-		if err != nil {
-			http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "User created successfully",
+		"id":      id,
+	})
 }
 
 func (c UserController) EditForm(w http.ResponseWriter, r *http.Request) {
@@ -102,21 +70,13 @@ func (c UserController) EditForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Template.ExecuteTemplate(w, "users-edit", user)
-	if err != nil {
-		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
 
 func (c UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPut && r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form", http.StatusBadRequest)
 		return
 	}
 
@@ -126,10 +86,10 @@ func (c UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := validation.UserValidation{
-		Name:     r.FormValue("name"),
-		Email:    r.FormValue("email"),
-		Password: r.FormValue("password"),
+	var user validation.UserValidation
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
 	}
 
 	if err := validation.ValidateUser(user); err != nil {
@@ -143,21 +103,19 @@ func (c UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "User updated successfully",
+	})
 }
 
 func (c UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodDelete && r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form", http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.ParseUint(r.FormValue("id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -169,7 +127,10 @@ func (c UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "User deleted successfully",
+	})
 }
 
 func (c UserController) GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -179,9 +140,6 @@ func (c UserController) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Template.ExecuteTemplate(w, "users-index", users)
-	if err != nil {
-		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
 }

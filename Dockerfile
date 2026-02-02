@@ -1,14 +1,13 @@
-FROM golang:1.25.4-alpine
-
+FROM golang:1.21-alpine AS builder
 WORKDIR /app
-
-RUN apk add --no-cache ca-certificates tzdata
-
-# Keep module cache efficient (optional for dev)
 COPY go.mod go.sum ./
-RUN go mod download || true
-
+RUN go mod download
 COPY . .
+RUN go build -o api ./cmd/web
 
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/api .
 EXPOSE 8080
-CMD ["go", "run", "./cmd/web"]
+CMD ["./api"]

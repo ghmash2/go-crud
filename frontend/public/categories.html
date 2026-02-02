@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - Go CRUD</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏷️ Category Management</h1>
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a> / Categories
+            </nav>
+        </header>
+
+        <div class="actions">
+            <button id="addBtn" class="btn btn-primary">+ Add Category</button>
+        </div>
+
+        <div id="formSection" class="form-section" style="display: none;">
+            <h2 id="formTitle">Add New Category</h2>
+            <form id="categoryForm">
+                <input type="hidden" id="categoryId">
+                <div class="form-group">
+                    <label for="name">Category Name:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table id="categoriesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    <tr>
+                        <td colspan="4" class="loading">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="js/categories.js"></script>
+</body>
+
+</html>
